@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>МойТуб Pro — Локальный видеохостинг</title>
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -23,10 +23,20 @@
     min-height: 100vh;
     overflow-x: hidden;
     transition: background 0.2s, color 0.2s;
+    /* Учитываем safe area на iOS с notch/Dynamic Island */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; }
-  input, textarea { font-family: inherit; }
+  button, input, textarea, select { font-family: inherit; }
+  button, [role="button"], .icon-btn, .action-btn, .btn-primary, .btn-ghost, .upload-btn, .subscribe-btn, .login-btn, .video-card-menu {
+    touch-action: manipulation;
+  }
+  /* iOS 16px минимум — иначе автозум при фокусе */
+  input, textarea, select { font-size: 16px; }
+  @media (min-width: 768px) {
+    input, textarea, select { font-size: 14px; }
+  }
 
   /* ===== ТЕМЫ ===== */
   :root, [data-theme="dark"] {
@@ -72,11 +82,12 @@
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center;
-    padding: 0 20px;
-    gap: 12px;
+    padding: 0 clamp(8px, 2vw, 20px);
+    gap: clamp(6px, 1.5vw, 12px);
   }
+  .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .logo {
-    font-size: 20px; font-weight: 700;
+    font-size: clamp(16px, 3.5vw, 20px); font-weight: 700;
     color: var(--text); cursor: pointer;
     display: flex; align-items: center; gap: 8px;
     flex-shrink: 0;
@@ -86,18 +97,23 @@
     background: var(--accent);
     border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
   .logo-mark svg { width: 12px; height: 12px; fill: white; margin-left: 1px; }
 
   .search-wrap {
-    flex: 1; max-width: 600px;
+    flex: 1; min-width: 0; max-width: 600px;
     margin: 0 auto;
     display: flex;
     position: relative;
+    transition: max-width 0.2s;
+  }
+  .search-wrap:focus-within {
+    max-width: 900px; /* фокус — растягиваем, чтобы не мешали кнопки справа */
   }
   .search-input {
-    flex: 1;
-    height: 38px;
+    flex: 1; min-width: 0;
+    height: 40px;
     background: var(--bg-2);
     border: 1px solid var(--border);
     border-right: none;
@@ -105,33 +121,37 @@
     padding: 0 16px;
     color: var(--text);
     outline: none;
-    font-size: 14px;
+    font-size: 16px; /* iOS no-zoom */
   }
   .search-input:focus { border-color: var(--accent-blue); box-shadow: inset 0 0 0 1px var(--accent-blue); }
   .search-btn {
-    width: 58px;
+    width: 58px; height: 40px;
     background: var(--bg-3);
     border: 1px solid var(--border);
     border-radius: 0 20px 20px 0;
     cursor: pointer;
     color: var(--text);
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
   .search-btn:hover { background: var(--bg-hover); }
   .search-btn svg { width: 20px; height: 20px; fill: var(--text); }
 
-  .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .icon-btn {
-    width: 40px; height: 40px;
+    width: 44px; height: 44px;
     background: none; border: none;
     border-radius: 50%;
     color: var(--text);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     position: relative;
+    flex-shrink: 0;
   }
   .icon-btn:hover { background: var(--bg-3); }
   .icon-btn svg { width: 22px; height: 22px; fill: var(--text); }
+  .icon-btn.burger { background: var(--bg-2); }
+  .icon-btn.burger:hover { background: var(--bg-3); }
 
   .notifications-badge {
     position: absolute; top: 4px; right: 4px;
@@ -145,29 +165,31 @@
   }
 
   .upload-btn, .create-btn {
-    height: 36px;
+    height: 40px;
     padding: 0 14px;
     background: var(--bg-3);
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: 20px;
     color: var(--text);
     cursor: pointer;
     display: flex; align-items: center; gap: 6px;
     font-size: 14px; font-weight: 500;
+    flex-shrink: 0;
   }
   .upload-btn:hover, .create-btn:hover { background: var(--bg-hover); }
   .upload-btn svg, .create-btn svg { width: 18px; height: 18px; fill: var(--text); }
 
   .login-btn {
-    height: 36px;
+    height: 40px;
     padding: 0 16px;
     background: transparent;
     border: 1px solid var(--accent-blue);
-    border-radius: 18px;
+    border-radius: 20px;
     color: var(--accent-blue);
     cursor: pointer;
     font-size: 14px; font-weight: 500;
     display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
   }
   .login-btn:hover { background: rgba(62, 166, 255, 0.1); }
   .login-btn svg { fill: var(--accent-blue); }
@@ -227,7 +249,7 @@
     height: calc(100vh - 56px);
     background: var(--bg);
     border-right: 1px solid var(--border);
-    padding: 12px 0;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
     overflow-y: auto;
     z-index: 40;
     transition: width 0.2s, transform 0.2s;
@@ -236,7 +258,7 @@
   .sidebar-item {
     display: flex; align-items: center; gap: 20px;
     padding: 0 24px;
-    height: 40px;
+    height: 44px;
     cursor: pointer;
     font-size: 14px;
     color: var(--text);
@@ -256,6 +278,18 @@
     color: var(--text-muted);
   }
 
+  /* Затемняющий бэкдроп для мобильного оверлея */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 56px; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 39;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .sidebar-backdrop.show { opacity: 1; }
+
   /* ===========  ОБЩЕЕ  =========== */
   .main-content {
     flex: 1;
@@ -267,33 +301,34 @@
   .container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 24px;
+    padding: clamp(12px, 2vw, 24px);
   }
   .page-title {
-    font-size: 22px; font-weight: 500;
+    font-size: clamp(18px, 2.5vw, 22px); font-weight: 500;
     margin-bottom: 20px;
   }
 
   .btn-primary {
-    height: 40px;
+    min-height: 44px;
     padding: 0 20px;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 20px;
+    border-radius: 22px;
     font-size: 14px; font-weight: 500;
     cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   }
   .btn-primary:hover { background: #d9002b; }
   .btn-primary:disabled { background: var(--bg-3); color: var(--text-dim); cursor: not-allowed; }
 
   .btn-ghost {
-    height: 36px;
+    min-height: 40px;
     padding: 0 16px;
     background: var(--bg-3);
     color: var(--text);
     border: none;
-    border-radius: 18px;
+    border-radius: 20px;
     font-size: 14px; font-weight: 500;
     cursor: pointer;
   }
@@ -302,8 +337,8 @@
   /* ===========  СЕТКА ВИДЕО  =========== */
   .video-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 24px 14px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: clamp(14px, 2vw, 24px) clamp(8px, 1.2vw, 16px);
   }
   .video-card {
     cursor: pointer;
@@ -336,15 +371,20 @@
   }
   .video-card-menu {
     position: absolute; top: 6px; right: 6px;
-    width: 32px; height: 32px;
+    width: 36px; height: 36px;
     background: rgba(0,0,0,0.7);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.15s;
     cursor: pointer; border: none; color: white;
+    touch-action: manipulation;
   }
   .video-card:hover .video-card-menu { opacity: 1; }
   .video-card-menu svg { fill: white; }
+  /* На тач-устройствах всегда показываем меню */
+  @media (hover: none) and (pointer: coarse) {
+    .video-card-menu { opacity: 1; }
+  }
 
   .video-card-info {
     display: flex; gap: 10px;
@@ -385,7 +425,7 @@
     gap: 24px;
     max-width: 1500px;
     margin: 0 auto;
-    padding: 16px 24px 60px;
+    padding: clamp(8px, 1.5vw, 16px) clamp(12px, 2vw, 24px) 60px;
   }
   .watch-primary { min-width: 0; }
   .watch-sidebar { min-width: 0; padding-left: 8px; }
@@ -395,9 +435,10 @@
   }
 
   .watch-title {
-    font-size: 20px;
+    font-size: clamp(16px, 2.5vw, 20px);
     font-weight: 500;
     margin: 16px 0 12px;
+    line-height: 1.3;
   }
   .watch-meta-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -414,30 +455,32 @@
 
   .watch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .action-btn {
-    height: 36px;
+    min-height: 40px;
     padding: 0 14px;
     background: var(--bg-3);
     color: var(--text);
     border: none;
-    border-radius: 18px;
+    border-radius: 20px;
     font-size: 14px; font-weight: 500;
     cursor: pointer;
     display: flex; align-items: center; gap: 6px;
+    touch-action: manipulation;
   }
   .action-btn:hover { background: var(--bg-hover); }
   .action-btn.active { background: rgba(62, 166, 255, 0.2); color: var(--accent-blue); }
   .action-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
   .subscribe-btn {
-    height: 36px;
-    padding: 0 16px;
+    min-height: 40px;
+    padding: 0 18px;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 18px;
+    border-radius: 20px;
     font-size: 14px; font-weight: 500;
     cursor: pointer;
     display: flex; align-items: center; gap: 6px;
+    touch-action: manipulation;
   }
   .subscribe-btn.subscribed {
     background: var(--bg-3);
@@ -448,12 +491,14 @@
   .watch-description {
     background: var(--bg-2);
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 14px 16px;
     margin-bottom: 24px;
     font-size: 14px;
     line-height: 1.5;
     cursor: pointer;
+    transition: background 0.2s;
   }
+  .watch-description:hover { background: var(--bg-3); }
   .watch-description-meta {
     font-weight: 500;
     margin-bottom: 8px;
@@ -470,10 +515,23 @@
     -webkit-line-clamp: unset;
   }
   .watch-description-toggle {
-    margin-top: 8px;
-    font-weight: 500;
-    color: var(--text);
+    margin-top: 10px;
+    font-weight: 600;
+    color: var(--accent-blue);
     font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .watch-description-toggle::after {
+    content: '›';
+    display: inline-block;
+    transform: rotate(90deg);
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  .watch-description.expanded .watch-description-toggle::after {
+    transform: rotate(-90deg);
   }
 
   .watch-tags {
@@ -547,6 +605,7 @@
     background: var(--bg-2);
     border-radius: 10px;
     margin-bottom: 8px;
+    gap: 8px;
   }
   .queue-header-title { font-size: 14px; font-weight: 500; }
   .queue-header-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -555,6 +614,21 @@
     cursor: pointer;
   }
   .queue-header-link:hover { text-decoration: underline; }
+  .queue-header-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .queue-toggle {
+    width: 32px; height: 32px;
+    background: none; border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    touch-action: manipulation;
+  }
+  .queue-toggle:hover { background: var(--bg-3); color: var(--text); }
+  .queue-toggle.active { color: var(--accent); background: rgba(255,0,51,0.12); }
+  .queue-toggle svg { width: 18px; height: 18px; fill: currentColor; }
+
   .queue-divider {
     display: flex; align-items: center; gap: 10px;
     color: var(--text-muted);
@@ -567,6 +641,102 @@
     flex: 1;
     height: 1px;
     background: var(--border);
+  }
+
+  /* Бейдж «Следующее» на карточке рекомендации */
+  .reco-item.next-up {
+    box-shadow: inset 3px 0 0 var(--accent-blue);
+  }
+  .reco-next-badge {
+    position: absolute;
+    top: 4px; left: 4px;
+    background: var(--accent-blue);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  /* === Полоса «Далее» под плеером === */
+  .up-next-strip {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-2);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .up-next-strip:hover { background: var(--bg-3); }
+  .up-next-label {
+    display: flex; flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+    min-width: 78px;
+  }
+  .up-next-source {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px;
+    color: var(--accent-blue);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .up-next-source.playlist { color: var(--accent); }
+  .up-next-thumb {
+    width: 80px; aspect-ratio: 16/9;
+    background: var(--bg-3) center/cover no-repeat;
+    border-radius: 6px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .up-next-duration {
+    position: absolute; bottom: 2px; right: 2px;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 10px;
+  }
+  .up-next-info { flex: 1; min-width: 0; }
+  .up-next-title {
+    font-size: 13px; font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .up-next-skip {
+    flex-shrink: 0;
+    background: none; border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+    touch-action: manipulation;
+  }
+  .up-next-skip:hover { background: var(--bg-hover); }
+  .up-next-skip svg { width: 14px; height: 14px; fill: currentColor; }
+
+  @media (max-width: 600px) {
+    .up-next-strip { gap: 8px; padding: 8px; }
+    .up-next-label { min-width: 60px; font-size: 10px; }
+    .up-next-thumb { width: 64px; }
+    .up-next-title { font-size: 12px; }
+    .up-next-skip span { display: none; }
+    .up-next-skip { padding: 6px 8px; }
   }
 
   /* === Комментарии === */
@@ -670,27 +840,34 @@
   .field { margin-bottom: 20px; }
   .field-label {
     display: block;
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
   }
   .field-input, .field-textarea {
     width: 100%;
     background: var(--bg-2);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
+    border-radius: 8px;
+    padding: 12px 14px;
     color: var(--text);
     outline: none;
-    font-size: 14px;
+    font-size: 16px; /* iOS: 16px+ отключает автозум */
+    min-height: 44px;
   }
-  .field-input:focus, .field-textarea:focus { border-color: var(--accent-blue); }
+  .field-input:focus, .field-textarea:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue); }
   .field-textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
-  .field-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .field-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
   .upload-actions {
     display: flex; justify-content: flex-end; gap: 8px;
     margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 600px) {
+    .upload-actions { flex-direction: column-reverse; }
+    .upload-actions > * { width: 100%; }
   }
 
   .progress-bar {
@@ -1072,41 +1249,101 @@
   }
   .vp-menu-back { font-size: 18px; line-height: 1; }
 
+  /* === Оверлей для свайп-жестов (громкость слева, яркость справа) === */
+  .vp-gesture-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    pointer-events: none;
+    z-index: 4;
+    min-width: 120px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .vp-gesture-overlay.show { opacity: 1; }
+  .vp-gesture-overlay svg { width: 28px; height: 28px; fill: white; }
+  .vp-gesture-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .vp-gesture-bar-fill {
+    height: 100%;
+    background: var(--vp-accent);
+    transition: width 0.05s linear;
+  }
+  .vp-gesture-label { font-size: 13px; font-weight: 500; }
+
+  /* Слой яркости — накладывается на видео и затемняет его */
+  .vp-brightness-veil {
+    position: absolute; inset: 0;
+    background: black;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 2;
+  }
+
   /* === Адаптив плеера === */
   @media (hover: none) and (pointer: coarse) {
     /* На сенсорных устройствах громкость всегда видна (нет hover) */
     .vp-volume-slider { width: 70px; padding: 0 6px; }
+    /* Прогресс толще для удобства перетаскивания пальцем */
+    .vp-progress { padding: 14px 4px; }
+    .vp-progress-track { height: 5px; }
+    .vp-progress:hover .vp-progress-track,
+    .vp-progress.dragging .vp-progress-track { height: 7px; }
+    .vp-thumb { width: 16px; height: 16px; }
+    .vp-progress:hover .vp-thumb,
+    .vp-progress.dragging .vp-thumb { transform: translate(-50%, -50%) scale(1); }
+    /* Кнопки минимум 44px */
+    .vp-btn { width: 44px; height: 44px; }
+    .vp-btn svg { width: 24px; height: 24px; }
+    /* Ползунок громкости толще */
+    .vp-volume-slider input { height: 6px; }
+    .vp-volume-slider input::-webkit-slider-thumb { width: 16px; height: 16px; }
+    .vp-volume-slider input::-moz-range-thumb { width: 16px; height: 16px; }
+    /* Центральная кнопка полупрозрачнее — не перекрывает видео */
+    .vp-center-play { background: rgba(0,0,0,0.4); }
   }
   @media (max-width: 900px) {
     .vp-top { padding: 10px 14px 28px; }
     .vp-title { font-size: 14px; }
     .vp-chapter { font-size: 12px; }
-    .vp-controls { padding: 28px 8px 4px; }
-    .vp-btn { width: 38px; height: 38px; }
+    .vp-controls { padding: 32px 6px 6px; }
     .vp-menu { right: 8px; min-width: 220px; }
   }
   @media (max-width: 600px) {
     .vp-btn.hide-mobile { display: none; }
-    .vp-btn { width: 34px; height: 34px; }
-    .vp-btn svg { width: 20px; height: 20px; }
     .vp-time { padding: 0 6px; font-size: 12px; }
     .vp-top { padding: 8px 12px 24px; }
-    .vp-controls { padding: 24px 4px 2px; }
-    .vp-center-play { width: 64px; height: 64px; }
-    .vp-center-play svg { width: 28px; height: 28px; }
-    .vp-volume-slider { width: 56px; }
-    .vp-volume:hover .vp-volume-slider { width: 56px; padding: 0 4px; }
-    .vp-menu { left: 8px; right: 8px; bottom: 52px; min-width: 0; }
-    .vp-seek-indicator { width: 64px; height: 64px; font-size: 11px; }
+    .vp-controls { padding: 28px 4px 4px; }
+    .vp-center-play {
+      width: 68px; height: 68px;
+      background: rgba(0,0,0,0.35);
+    }
+    .vp-center-play svg { width: 30px; height: 30px; }
+    .vp-menu { left: 8px; right: 8px; bottom: 60px; min-width: 0; }
+    .vp-seek-indicator { width: 60px; height: 60px; font-size: 11px; }
     .vp-seek-indicator svg { width: 22px; height: 22px; }
     .vp-tip { font-size: 11px; padding: 4px 8px; }
   }
+  /* На очень узких экранах скрываем «Следующее», «−10 сек», «+10 сек» — оставляем только Play, громкость, ПЭ */
+  @media (max-width: 480px) {
+    .vp-btn.hide-xs { display: none; }
+    .vp-time .total { display: none; }
+    .vp-controls { padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  }
   @media (max-width: 380px) {
-    .vp-btn { width: 30px; height: 30px; }
-    .vp-btn svg { width: 18px; height: 18px; }
     .vp-volume-slider { display: none; }
     .vp-time { font-size: 11px; padding: 0 4px; }
-    .vp-time .total { display: none; }
   }
 
   /* === Storage note === */
@@ -1129,13 +1366,13 @@
     z-index: 200;
     display: flex; align-items: center; justify-content: center;
     animation: fadeIn 0.2s ease;
-    padding: 20px;
+    padding: clamp(8px, 2vw, 20px);
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
     background: var(--bg-2);
     border-radius: 12px;
-    padding: 24px;
+    padding: clamp(16px, 3vw, 24px);
     max-width: 500px;
     width: 100%;
     max-height: 85vh;
@@ -1148,18 +1385,29 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-  .modal h2 { font-size: 20px; margin-bottom: 16px; }
+  .modal h2 { font-size: clamp(16px, 2.5vw, 20px); margin-bottom: 16px; padding-right: 44px; }
   .modal-close {
-    position: absolute; top: 12px; right: 12px;
+    position: absolute; top: 8px; right: 8px;
     background: none; border: none;
     color: var(--text);
     cursor: pointer;
-    width: 32px; height: 32px;
+    width: 44px; height: 44px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
   }
   .modal-close:hover { background: var(--bg-3); }
-  .modal-close svg { width: 20px; height: 20px; fill: var(--text); }
+  .modal-close svg { width: 22px; height: 22px; fill: var(--text); }
+  @media (max-width: 600px) {
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal {
+      max-width: 100%;
+      max-height: 92vh;
+      min-height: 60vh;
+      border-radius: 16px 16px 0 0;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+  }
 
   /* ===========  TOAST  =========== */
   .toast {
@@ -1330,59 +1578,136 @@
   }
   .playlist-card:hover { background: var(--bg-hover); }
 
-  /* Адаптив */
-  @media (max-width: 1180px) {
+  /* ===============================================================
+     АДАПТИВНЫЕ БРЕЙКПОЙНТЫ
+     1600px  — большие мониторы (5–6 колонок)
+     1300px  — плеер: одна колонка
+     1024px  — сайдбар: оверлей
+     900px   — планшет: сайдбар компактнее, профиль компактнее
+     768px   — планшет ≥ 3 колонок
+     600px   — мобилка: только иконки, компактные рекомендации
+     480px   — маленькая мобилка: 2 колонки, скрыть текст
+     360px   — очень узкая
+     =============================================================== */
+
+  /* Очень широкие мониторы: увеличиваем минимальный размер карточки для 5–6 колонок */
+  @media (min-width: 1600px) {
+    .container, .watch-layout { max-width: 1720px; }
+    .video-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  }
+
+  /* Плеер в одну колонку когда пространства мало */
+  @media (max-width: 1300px) {
     .watch-layout { grid-template-columns: 1fr; }
-    .watch-sidebar { max-width: 800px; padding-left: 0; }
+    .watch-sidebar { max-width: 900px; padding-left: 0; }
     .reco-item-thumb { width: 168px; }
   }
+
+  /* Сайдбар: оверлей */
   @media (max-width: 1024px) {
     .sidebar {
       position: fixed; left: 0; top: 56px; bottom: 0;
       width: 240px; height: auto;
       box-shadow: var(--shadow);
     }
-    .sidebar.closed { transform: translateX(-100%); width: 240px; padding: 12px 0; border-right: 1px solid var(--border); overflow-y: auto; }
+    .sidebar.closed {
+      transform: translateX(-100%);
+      width: 240px; padding: 12px 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
     .main-content { margin-left: 0 !important; }
+    .sidebar-backdrop { display: block; }
+    /* сетка на планшете — 3 колонки */
+    .video-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
   }
+
   @media (max-width: 900px) {
     .profile-info h1 { font-size: 22px; }
     .profile-header { gap: 16px; padding: 16px 0; }
-    .video-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .header-actions .create-btn span,
+    .header-actions .upload-btn span { display: none; }
   }
-  @media (max-width: 720px) {
-    .search-wrap { max-width: none; }
-    .header { padding: 0 10px; gap: 8px; }
+
+  /* Планшет */
+  @media (max-width: 768px) {
+    .video-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px 12px; }
     .upload-form { flex-direction: column; }
     .upload-form-preview { width: 100%; }
-    .video-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px 10px; }
-    .container { padding: 16px; }
-    .watch-layout { padding: 12px; }
-    .upload-btn span, .create-btn span { display: none; }
+    .watch-title { font-size: 18px; }
+    .watch-actions { gap: 6px; }
+  }
+
+  /* Мобилка: 2 колонки, только иконки */
+  @media (max-width: 600px) {
+    .header { padding: 0 8px; gap: 6px; }
+    .search-wrap {
+      /* При фокусе перекрывает кнопки справа, чтобы не было наложений */
+      transition: none;
+    }
+    .search-wrap:focus-within {
+      position: absolute;
+      left: 8px; right: 8px;
+      top: 8px;
+      max-width: none;
+      z-index: 101;
+      background: var(--bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 20px;
+    }
     .profile-header { flex-direction: column; align-items: flex-start; }
     .profile-actions { width: 100%; }
-    .watch-title { font-size: 18px; }
-    .watch-actions { gap: 6px; flex-wrap: wrap; }
-    .action-btn { padding: 0 10px; height: 34px; font-size: 13px; }
-    .modal { padding: 18px; }
-    .modal h2 { font-size: 18px; }
-    .reco-item-thumb { width: 120px; }
-    .reco-item-title { font-size: 12px; }
+    /* watch actions становятся иконками */
+    .watch-actions .action-btn span { display: none; }
+    .watch-actions .action-btn {
+      width: 44px; padding: 0;
+      justify-content: center;
+    }
+    /* компактные рекомендации */
+    .reco-item-thumb { width: 130px; }
+    .reco-item-title { font-size: 13px; }
+    .reco-item-meta { font-size: 11px; }
+    /* модальные окна почти на весь экран (правило в основной секции modal тоже есть) */
+    .modal-fullscreen {
+      max-width: 100%;
+      max-height: 100vh;
+      min-height: 100vh;
+      border-radius: 0;
+    }
   }
+
+  /* Очень узкие */
   @media (max-width: 480px) {
-    .header { gap: 6px; padding: 0 8px; }
     .logo { font-size: 17px; }
     .logo-mark { width: 24px; height: 18px; }
-    .container { padding: 12px; }
-    .watch-layout { padding: 8px; }
-    .profile-info h1 { font-size: 20px; }
-    .profile-info p { font-size: 13px; }
-    .action-btn span { display: none; }
-    .action-btn { padding: 0; width: 34px; }
-    .video-grid { grid-template-columns: 1fr 1fr; gap: 16px 8px; }
+    .video-grid { grid-template-columns: 1fr 1fr; gap: 14px 8px; }
     .video-card-title { font-size: 12px; -webkit-line-clamp: 2; }
     .video-card-meta { font-size: 11px; }
     .video-card-info { padding-top: 8px; gap: 8px; }
+    /* Скрываем текст «Загрузить» / «Войти» — оставляем только иконки */
+    .upload-btn span, .create-btn span, .login-btn span { display: none; }
+    .upload-btn, .create-btn, .login-btn { padding: 0; width: 44px; justify-content: center; }
+    .reco-item { gap: 6px; padding: 3px; }
+    .reco-item-thumb { width: 100px; }
+    .reco-item-title { font-size: 12px; -webkit-line-clamp: 2; }
+    .reco-item-meta { font-size: 10px; margin-top: 2px; }
+    .queue-header { padding: 8px 10px; }
+    .queue-header-title { font-size: 13px; }
+  }
+
+  /* Микро-экран */
+  @media (max-width: 360px) {
+    .header { padding: 0 6px; gap: 4px; }
+    .logo span { display: none; }
+    .video-grid { gap: 12px 6px; }
+    .video-card-title { font-size: 11.5px; }
+    .container { padding: 8px; }
+    .watch-layout { padding: 8px; }
+  }
+
+  /* Landscape на телефоне — плеер занимает всю высоту */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .vp:fullscreen, .vp.fullscreen { width: 100vw; height: 100vh; }
   }
 </style>
 </head>
@@ -1439,6 +1764,9 @@ const ICONS = {
   skipFwd: 'M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z',
   prev: 'M6 6h2v12H6zm3.5 6l8.5 6V6z',
   next: 'M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z',
+  shuffle: 'M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z',
+  repeat: 'M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z',
+  skip: 'M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z',
   settings: 'M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z',
   cc: 'M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z',
   pip: 'M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V4.98C23 3.88 22.1 3 21 3zm0 16.02H3V4.97h18v14.05z',
@@ -1518,6 +1846,7 @@ const K = {
   playlistVideos:  'vh_playlist_videos',
   history:         'vh_history',
   watchLater:      'vh_watch_later',
+  playlistPrefs:   'vh_playlist_prefs', // { [playlistId]: { loop, shuffle, order, lastVideoId } }
   currentUser:     'vh_currentUserId',
   theme:           'vh_theme',
 };
@@ -1541,9 +1870,106 @@ const STORE = {
   setHistory:      (v) => LS.set(K.history, v),
   watchLater:      () => LS.get(K.watchLater, []),
   setWatchLater:   (v) => LS.set(K.watchLater, v),
+  playlistPrefs:   () => LS.get(K.playlistPrefs, {}),
+  setPlaylistPrefs:(v) => LS.set(K.playlistPrefs, v),
   currentUserId:   () => LS.get(K.currentUser, null),
   setCurrentUserId:(v) => LS.set(K.currentUser, v),
 };
+
+// ============================================================
+//  ХЕЛПЕРЫ ПРЕДПОЧТЕНИЙ ПЛЕЙЛИСТА (loop / shuffle / last position)
+// ============================================================
+function getPlaylistPrefs(playlistId) {
+  if (!playlistId) return { loop: false, shuffle: false, order: null, lastVideoId: null };
+  const all = STORE.playlistPrefs();
+  return { loop: false, shuffle: false, order: null, lastVideoId: null, ...(all[playlistId] || {}) };
+}
+function updatePlaylistPrefs(playlistId, patch) {
+  if (!playlistId) return;
+  const all = STORE.playlistPrefs();
+  all[playlistId] = { ...getPlaylistPrefs(playlistId), ...patch };
+  STORE.setPlaylistPrefs(all);
+}
+// Fisher–Yates
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// Одноразовая гигиена: удалить дубликаты и «битые» ссылки из playlistVideos.
+// Проходит быстро (O(n)), безопасна к повторному запуску.
+function cleanupPlaylistData() {
+  const all = STORE.playlistVideos();
+  const validVideoIds = new Set(STORE.videos().map(v => v.id));
+  const validPlaylistIds = new Set(STORE.playlists().map(p => p.id));
+  const seen = new Set(); // ключ = `${playlistId}::${videoId}`
+  const cleaned = [];
+  let changed = false;
+
+  for (const pv of all) {
+    // 1) должен ссылаться на существующий плейлист и видео
+    if (!validPlaylistIds.has(pv.playlistId) || !validVideoIds.has(pv.videoId)) {
+      changed = true;
+      continue;
+    }
+    // 2) дедуп: одно и то же видео в одном плейлисте — только раз
+    const key = `${pv.playlistId}::${pv.videoId}`;
+    if (seen.has(key)) {
+      changed = true;
+      continue;
+    }
+    seen.add(key);
+    cleaned.push(pv);
+  }
+
+  if (changed) STORE.setPlaylistVideos(cleaned);
+  return { removed: all.length - cleaned.length };
+}
+
+// Возвращает упорядоченный (или перемешанный) список видео плейлиста.
+// Порядок при shuffle кешируется в prefs; новые видео добавляются в конец.
+function getPlaylistOrderedVideos(playlistId) {
+  // Стабильная сортировка + дедупликация: если по какой-то причине в plList
+  // одно и то же видео встречается дважды, оставляем только первое вхождение —
+  // иначе очередь может «залипать» на паре соседних видео.
+  const raw = STORE.playlistVideos().filter(pv => pv.playlistId === playlistId);
+  raw.sort((a, b) => {
+    const oa = typeof a.order === 'number' ? a.order : 0;
+    const ob = typeof b.order === 'number' ? b.order : 0;
+    if (oa !== ob) return oa - ob;
+    // Тай-брейк: по времени добавления → детерминированный порядок
+    return (a.addedAt || 0) - (b.addedAt || 0);
+  });
+  const seen = new Set();
+  const videos = [];
+  for (const pv of raw) {
+    if (seen.has(pv.videoId)) continue;
+    seen.add(pv.videoId);
+    const v = STORE.videos().find(x => x.id === pv.videoId);
+    if (v) videos.push(v);
+  }
+
+  const prefs = getPlaylistPrefs(playlistId);
+  if (!prefs.shuffle) return videos;
+
+  const idSet = new Set(videos.map(v => v.id));
+  let order = Array.isArray(prefs.order) ? prefs.order.filter(id => idSet.has(id)) : [];
+  // Дедупликация внутри order (на всякий)
+  order = [...new Set(order)];
+  const missing = videos.map(v => v.id).filter(id => !order.includes(id));
+  if (order.length === 0) {
+    order = shuffleArray(videos.map(v => v.id));
+    updatePlaylistPrefs(playlistId, { order });
+  } else if (missing.length > 0) {
+    order = [...order, ...shuffleArray(missing)];
+    updatePlaylistPrefs(playlistId, { order });
+  }
+  const byId = new Map(videos.map(v => [v.id, v]));
+  return order.map(id => byId.get(id)).filter(Boolean);
+}
 
 // ============================================================
 //  УТИЛИТЫ
@@ -1660,6 +2086,23 @@ async function deleteVideoById(videoId) {
   STORE.setPlaylistVideos(STORE.playlistVideos().filter(pv => pv.videoId !== videoId));
   STORE.setHistory(STORE.history().filter(h => h.videoId !== videoId));
   STORE.setWatchLater(STORE.watchLater().filter(w => w.videoId !== videoId));
+
+  // Убираем видео из закешированного shuffle-порядка и lastVideoId во всех плейлистах
+  const prefs = STORE.playlistPrefs();
+  let changed = false;
+  for (const pid of Object.keys(prefs)) {
+    const p = prefs[pid];
+    if (Array.isArray(p.order) && p.order.includes(videoId)) {
+      p.order = p.order.filter(id => id !== videoId);
+      changed = true;
+    }
+    if (p.lastVideoId === videoId) {
+      p.lastVideoId = null;
+      changed = true;
+    }
+  }
+  if (changed) STORE.setPlaylistPrefs(prefs);
+
   return true;
 }
 
@@ -1863,7 +2306,7 @@ function VideoCard({ video, showMenu = true, canDelete = false, onDeleted, playl
 }
 
 // Компактная карточка для рекомендаций сбоку
-function RecoItem({ video, playlistId, active = false }) {
+function RecoItem({ video, playlistId, active = false, nextUp = false }) {
   const { navigate } = useApp();
   const author = useMemo(() => STORE.users().find(u => u.id === video?.authorId), [video?.authorId]);
   const [url, setUrl] = useState(null);
@@ -1873,12 +2316,13 @@ function RecoItem({ video, playlistId, active = false }) {
   if (!video) return null;
   return (
     <div
-      className={`reco-item ${active ? 'active' : ''}`}
+      className={`reco-item ${active ? 'active' : ''} ${nextUp ? 'next-up' : ''}`}
       onClick={() => navigate('watch', { id: video.id, pl: playlistId })}
     >
       <div className={`reco-item-thumb ${!url ? 'placeholder' : ''}`}
            style={url ? { backgroundImage: `url(${url})` } : {}}>
         {!url && <I d={ICONS.film} />}
+        {nextUp && <div className="reco-next-badge">Следующее</div>}
         <div className="reco-item-duration">{formatDuration(video.duration)}</div>
       </div>
       <div className="reco-item-info">
@@ -2315,6 +2759,71 @@ function VideoPlayer({ src, poster, title, onNext, hasNext, subtitles = [], chap
   };
 
   // ====================================================
+  //  Свайп-жесты по видео: громкость (слева) / яркость (справа)
+  // ====================================================
+  const gestureRef = useRef({ startX: 0, startY: 0, mode: null, initial: 0, active: false });
+  const [gesture, setGesture] = useState(null); // { type: 'volume'|'brightness', value: 0..1 }
+  const [brightness, setBrightness] = useState(1); // 0..1 (веб-плеер не имеет доступа к системной — используем CSS overlay)
+
+  const onVideoTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const rect = videoRef.current.getBoundingClientRect();
+    gestureRef.current = {
+      startX: t.clientX,
+      startY: t.clientY,
+      mode: null,
+      initial: 0,
+      rectHeight: rect.height,
+      rectWidth: rect.width,
+      isLeft: (t.clientX - rect.left) < rect.width / 2,
+      active: true,
+    };
+  };
+
+  const onVideoTouchMove = (e) => {
+    const g = gestureRef.current;
+    if (!g.active || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - g.startX;
+    const dy = t.clientY - g.startY;
+
+    // Определяем режим по первому существенному движению
+    if (!g.mode) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx) * 1.2) {
+        g.mode = g.isLeft ? 'volume' : 'brightness';
+        g.initial = g.mode === 'volume' ? (muted ? 0 : volume) : brightness;
+      } else {
+        g.mode = 'ignore';
+      }
+    }
+    if (g.mode === 'ignore') return;
+
+    // Свайп вверх => увеличение. Полный ход по высоте видео = 100%.
+    const delta = -dy / g.rectHeight;
+    const next = Math.max(0, Math.min(1, g.initial + delta));
+
+    if (g.mode === 'volume') {
+      const v = videoRef.current;
+      if (v) { v.volume = next; v.muted = next === 0; }
+      setGesture({ type: 'volume', value: next });
+    } else {
+      // Не даём затемнить до чёрного — минимум 15%
+      const b = Math.max(0.15, next);
+      setBrightness(b);
+      setGesture({ type: 'brightness', value: b });
+    }
+  };
+
+  const onVideoTouchEnd = () => {
+    gestureRef.current.active = false;
+    gestureRef.current.mode = null;
+    // Индикатор гаснет через короткое время
+    setTimeout(() => setGesture(null), 400);
+  };
+
+  // ====================================================
   //  Клик/наведение на прогресс
   // ====================================================
   const getPctFromEvent = (e) => {
@@ -2403,6 +2912,10 @@ function VideoPlayer({ src, poster, title, onNext, hasNext, subtitles = [], chap
         preload="metadata"
         onClick={onVideoClick}
         onDoubleClick={onVideoDblClick}
+        onTouchStart={onVideoTouchStart}
+        onTouchMove={onVideoTouchMove}
+        onTouchEnd={onVideoTouchEnd}
+        onTouchCancel={onVideoTouchEnd}
         crossOrigin="anonymous"
       >
         {subtitles.map((sub, i) => (
@@ -2415,6 +2928,24 @@ function VideoPlayer({ src, poster, title, onNext, hasNext, subtitles = [], chap
           />
         ))}
       </video>
+
+      {/* Слой яркости — накрывает видео и затемняет его при свайпе вниз справа */}
+      <div className="vp-brightness-veil" style={{ opacity: 1 - brightness }} />
+
+      {/* Оверлей активного жеста (громкость/яркость) */}
+      {gesture && (
+        <div className="vp-gesture-overlay show">
+          <I d={gesture.type === 'volume'
+            ? (gesture.value === 0 ? ICONS.volMute : gesture.value < 0.5 ? ICONS.volLow : ICONS.volHigh)
+            : 'M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z'} />
+          <div className="vp-gesture-bar">
+            <div className="vp-gesture-bar-fill" style={{ width: `${gesture.value * 100}%` }} />
+          </div>
+          <div className="vp-gesture-label">
+            {gesture.type === 'volume' ? 'Громкость' : 'Яркость'} {Math.round(gesture.value * 100)}%
+          </div>
+        </div>
+      )}
 
       {/* Верхняя панель */}
       {(title || currentChapter) && (
@@ -2487,15 +3018,15 @@ function VideoPlayer({ src, poster, title, onNext, hasNext, subtitles = [], chap
           </button>
 
           {hasNext && (
-            <button className="vp-btn" onClick={onNext} aria-label="Следующее видео" title="Следующее видео">
+            <button className="vp-btn hide-xs" onClick={onNext} aria-label="Следующее видео" title="Следующее видео">
               <I d={ICONS.next} />
             </button>
           )}
 
-          <button className="vp-btn hide-mobile" onClick={() => skip(-10)} aria-label="−10 сек" title="−10 сек">
+          <button className="vp-btn hide-mobile hide-xs" onClick={() => skip(-10)} aria-label="−10 сек" title="−10 сек">
             <I d={ICONS.skipBack} />
           </button>
-          <button className="vp-btn hide-mobile" onClick={() => skip(10)} aria-label="+10 сек" title="+10 сек">
+          <button className="vp-btn hide-mobile hide-xs" onClick={() => skip(10)} aria-label="+10 сек" title="+10 сек">
             <I d={ICONS.skipFwd} />
           </button>
 
@@ -2847,24 +3378,68 @@ function CollaborativePlaylist({ playlistId }) {
 //  ИИ-РЕКОМЕНДАЦИИ (эвристические)
 // ============================================================
 // ============================================================
+//  ПОЛОСА «ДАЛЕЕ» — под плеером
+// ============================================================
+function UpNextStrip({ video, source, playlistName, onSkip, onOpen }) {
+  const [thumbUrl, setThumbUrl] = useState(null);
+  useEffect(() => {
+    if (video?.thumbKey) getBlobUrl('thumbs', video.thumbKey).then(setThumbUrl);
+    else setThumbUrl(null);
+  }, [video?.thumbKey]);
+
+  if (!video) return null;
+
+  const sourceLabel = source === 'playlist'
+    ? `Из плейлиста «${playlistName || ''}»`
+    : 'Рекомендация';
+
+  return (
+    <div className="up-next-strip" onClick={onOpen}>
+      <div className="up-next-label">
+        Далее
+        <span className={`up-next-source ${source === 'playlist' ? 'playlist' : ''}`}>
+          {sourceLabel}
+        </span>
+      </div>
+      <div
+        className="up-next-thumb"
+        style={thumbUrl ? { backgroundImage: `url(${thumbUrl})` } : {}}
+      >
+        <div className="up-next-duration">{formatDuration(video.duration)}</div>
+      </div>
+      <div className="up-next-info">
+        <div className="up-next-title">{video.title}</div>
+      </div>
+      <button
+        className="up-next-skip"
+        onClick={(e) => { e.stopPropagation(); onSkip(); }}
+        title="Пропустить"
+        aria-label="Пропустить и перейти к следующему"
+      >
+        <I d={ICONS.skip} /> <span>Пропустить</span>
+      </button>
+    </div>
+  );
+}
+
+// ============================================================
 //  ОЧЕРЕДЬ ПРОСМОТРА: плейлист (если есть) + AI-рекомендации
 // ============================================================
-function WatchQueue({ currentVideoId, playlistId }) {
+function WatchQueue({ currentVideoId, playlistId, nextVideoId, nextSource, onPrefsChange }) {
   const { user, navigate } = useApp();
+  const [prefsTick, setPrefsTick] = useState(0);
 
-  // Плейлист, если задан
+  const prefs = useMemo(() => getPlaylistPrefs(playlistId), [playlistId, prefsTick]);
+
+  // Плейлист, если задан — с учётом shuffle
   const playlistData = useMemo(() => {
     if (!playlistId) return null;
     const playlist = STORE.playlists().find(p => p.id === playlistId);
     if (!playlist) return null;
-    const items = STORE.playlistVideos()
-      .filter(pv => pv.playlistId === playlistId)
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map(pv => STORE.videos().find(v => v.id === pv.videoId))
-      .filter(Boolean);
+    const items = getPlaylistOrderedVideos(playlistId);
     const currentIndex = items.findIndex(v => v.id === currentVideoId);
     return { playlist, items, currentIndex };
-  }, [playlistId, currentVideoId]);
+  }, [playlistId, currentVideoId, prefsTick]);
 
   // Рекомендации (исключая текущее видео и всё, что уже в плейлисте)
   const recos = useMemo(() => {
@@ -2874,6 +3449,19 @@ function WatchQueue({ currentVideoId, playlistId }) {
   }, [currentVideoId, user, playlistData]);
 
   const goToPlaylist = () => navigate('playlist', { id: playlistId });
+
+  const toggleLoop = () => {
+    updatePlaylistPrefs(playlistId, { loop: !prefs.loop });
+    setPrefsTick(t => t + 1);
+    onPrefsChange?.();
+  };
+  const toggleShuffle = () => {
+    const next = !prefs.shuffle;
+    // При включении shuffle — сгенерировать порядок, при выключении — сбросить кеш
+    updatePlaylistPrefs(playlistId, { shuffle: next, order: next ? null : null });
+    setPrefsTick(t => t + 1);
+    onPrefsChange?.();
+  };
 
   const hasPlaylist = playlistData && playlistData.items.length > 0;
 
@@ -2890,9 +3478,30 @@ function WatchQueue({ currentVideoId, playlistId }) {
                 {playlistData.currentIndex >= 0
                   ? `${playlistData.currentIndex + 1} / ${playlistData.items.length}`
                   : `${playlistData.items.length} видео`}
+                {prefs.loop && ' · повтор'}
+                {prefs.shuffle && ' · перемешано'}
               </div>
             </div>
-            <div className="queue-header-link" onClick={goToPlaylist}>Открыть</div>
+            <div className="queue-header-actions">
+              <button
+                className={`queue-toggle ${prefs.shuffle ? 'active' : ''}`}
+                onClick={toggleShuffle}
+                title={prefs.shuffle ? 'Не перемешивать' : 'Перемешать'}
+                aria-label="Перемешать плейлист"
+              ><I d={ICONS.shuffle} /></button>
+              <button
+                className={`queue-toggle ${prefs.loop ? 'active' : ''}`}
+                onClick={toggleLoop}
+                title={prefs.loop ? 'Не зацикливать' : 'Зациклить плейлист'}
+                aria-label="Зациклить плейлист"
+              ><I d={ICONS.repeat} /></button>
+              <button
+                className="queue-toggle"
+                onClick={goToPlaylist}
+                title="Открыть плейлист"
+                aria-label="Открыть плейлист"
+              ><I d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3z" /></button>
+            </div>
           </div>
           <div>
             {playlistData.items.map(v => (
@@ -2901,6 +3510,7 @@ function WatchQueue({ currentVideoId, playlistId }) {
                 video={v}
                 playlistId={playlistId}
                 active={v.id === currentVideoId}
+                nextUp={v.id === nextVideoId && nextSource === 'playlist'}
               />
             ))}
           </div>
@@ -2917,7 +3527,13 @@ function WatchQueue({ currentVideoId, playlistId }) {
             </h3>
           )}
           <div>
-            {recos.map(v => <RecoItem key={v.id} video={v} />)}
+            {recos.map(v => (
+              <RecoItem
+                key={v.id}
+                video={v}
+                nextUp={v.id === nextVideoId && nextSource === 'recommendation'}
+              />
+            ))}
           </div>
         </>
       ) : (
@@ -2942,7 +3558,7 @@ function DataManagement({ onClose }) {
 
   const exportMeta = () => {
     const data = {
-      version: 2,
+      version: 3,
       exportDate: new Date().toISOString(),
       users:           STORE.users(),
       videos:          STORE.videos(),
@@ -2951,6 +3567,7 @@ function DataManagement({ onClose }) {
       subscriptions:   STORE.subscriptions(),
       playlists:       STORE.playlists(),
       playlistVideos:  STORE.playlistVideos(),
+      playlistPrefs:   STORE.playlistPrefs(),
       history:         STORE.history(),
       watchLater:      STORE.watchLater(),
     };
@@ -2979,6 +3596,7 @@ function DataManagement({ onClose }) {
         if (data.subscriptions)  STORE.setSubscriptions(data.subscriptions);
         if (data.playlists)      STORE.setPlaylists(data.playlists);
         if (data.playlistVideos) STORE.setPlaylistVideos(data.playlistVideos);
+        if (data.playlistPrefs)  STORE.setPlaylistPrefs(data.playlistPrefs);
         if (data.history)        STORE.setHistory(data.history);
         if (data.watchLater)     STORE.setWatchLater(data.watchLater);
         showToast('Импорт завершён. Перезагрузка…');
@@ -3071,12 +3689,14 @@ function Header({ onToggleSidebar, search, setSearch, theme, toggleTheme }) {
 
   return (
     <header className="header">
-      <button className="icon-btn" onClick={onToggleSidebar} title="Меню">
-        <I d={ICONS.menu} />
-      </button>
-      <div className="logo" onClick={() => navigate('home')}>
-        <div className="logo-mark"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div>
-        МойТуб Pro
+      <div className="header-left">
+        <button className="icon-btn burger" onClick={onToggleSidebar} title="Меню" aria-label="Открыть меню">
+          <I d={ICONS.menu} />
+        </button>
+        <div className="logo" onClick={() => navigate('home')}>
+          <div className="logo-mark"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div>
+          <span>МойТуб Pro</span>
+        </div>
       </div>
       <div className="search-wrap">
         <input
@@ -3085,7 +3705,7 @@ function Header({ onToggleSidebar, search, setSearch, theme, toggleTheme }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="search-btn" onClick={() => {}}><I d={ICONS.search} /></button>
+        <button className="search-btn" onClick={() => {}} aria-label="Найти"><I d={ICONS.search} /></button>
       </div>
       <div className="header-actions">
         <button className="icon-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}>
@@ -3126,7 +3746,7 @@ function Header({ onToggleSidebar, search, setSearch, theme, toggleTheme }) {
           </div>
         ) : (
           <button className="login-btn" onClick={() => navigate('login')}>
-            <I d={ICONS.user} size={16} /> Войти
+            <I d={ICONS.user} size={16} /> <span>Войти</span>
           </button>
         )}
       </div>
@@ -3137,22 +3757,65 @@ function Header({ onToggleSidebar, search, setSearch, theme, toggleTheme }) {
 // ============================================================
 //  SIDEBAR
 // ============================================================
-function Sidebar({ open, currentPage }) {
+function Sidebar({ open, currentPage, onClose }) {
   const { user, navigate } = useApp();
+  const asideRef = useRef(null);
   const subs = user ? STORE.subscriptions().filter(s => s.userId === user.id) : [];
   const subChannels = subs.map(s => STORE.users().find(u => u.id === s.channelId)).filter(Boolean).slice(0, 5);
+
+  // Свайп-влево для закрытия на мобильных
+  useEffect(() => {
+    if (!open || !onClose) return;
+    // только когда сайдбар — оверлей
+    if (window.innerWidth > 1024) return;
+    const el = asideRef.current;
+    if (!el) return;
+    let startX = null, startY = null, moved = false;
+    const onStart = (e) => {
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY; moved = false;
+    };
+    const onMove = (e) => {
+      if (startX == null) return;
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (!moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) moved = true;
+    };
+    const onEnd = (e) => {
+      if (startX == null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      if (moved && dx < -50) onClose();
+      startX = null; startY = null; moved = false;
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: true });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [open, onClose]);
+
+  // При навигации на мобильных — закрыть сайдбар
+  const go = (page, params) => {
+    navigate(page, params);
+    if (onClose && window.innerWidth <= 1024) onClose();
+  };
 
   const Item = ({ icon, label, page }) => (
     <div
       className={`sidebar-item ${currentPage === page ? 'active' : ''}`}
-      onClick={() => navigate(page)}
+      onClick={() => go(page)}
     >
       <I d={icon} /> {label}
     </div>
   );
 
   return (
-    <aside className={`sidebar ${open ? '' : 'closed'}`}>
+    <aside ref={asideRef} className={`sidebar ${open ? '' : 'closed'}`}>
       <Item icon={ICONS.home} label="Главная" page="home" />
       <Item icon={ICONS.trending} label="В тренде" page="trending" />
       <Item icon={ICONS.subscriptions} label="Подписки" page="subscriptions" />
@@ -3166,7 +3829,7 @@ function Sidebar({ open, currentPage }) {
           <div className="sidebar-divider" />
           <div className="sidebar-title">Подписки</div>
           {subChannels.map(u => (
-            <div key={u.id} className="sidebar-item" onClick={() => navigate('profile', { id: u.id })}>
+            <div key={u.id} className="sidebar-item" onClick={() => go('profile', { id: u.id })}>
               <Avatar user={u} size="sm" />
               <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {u.name}
@@ -3460,7 +4123,7 @@ function LibraryPage() {
       ) : (
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           {playlists.map(p => {
-            const count = STORE.playlistVideos().filter(pv => pv.playlistId === p.id).length;
+            const count = getPlaylistOrderedVideos(p.id).length;
             const isOwn = p.userId === user.id;
             return (
               <div key={p.id} className="playlist-card" onClick={() => navigate('playlist', { id: p.id })}>
@@ -3512,13 +4175,21 @@ function PlaylistPage({ playlistId }) {
   const isCollab = user && (playlist.collaborators || []).some(c => c.id === user.id);
   const canEdit = isOwner || isCollab;
 
-  const pvAll = STORE.playlistVideos().filter(pv => pv.playlistId === playlistId);
-  const videos = pvAll
-    .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .map(pv => STORE.videos().find(v => v.id === pv.videoId))
-    .filter(Boolean);
+  const prefs = getPlaylistPrefs(playlistId);
+  const orderedVideos = getPlaylistOrderedVideos(playlistId);
+  const videos = orderedVideos; // отображаем в текущем порядке (учитывая shuffle)
 
   const owner = STORE.users().find(u => u.id === playlist.userId);
+
+  const playFromStart = () => {
+    if (videos.length > 0) navigate('watch', { id: videos[0].id, pl: playlistId });
+  };
+  const continueWatching = () => {
+    const lastId = prefs.lastVideoId;
+    const target = videos.find(v => v.id === lastId) || videos[0];
+    if (target) navigate('watch', { id: target.id, pl: playlistId });
+  };
+  const hasContinue = prefs.lastVideoId && videos.some(v => v.id === prefs.lastVideoId);
 
   return (
     <div className="container">
@@ -3534,7 +4205,23 @@ function PlaylistPage({ playlistId }) {
         </div>
         <div className="profile-info">
           <h1>{playlist.name}</h1>
-          <p>Создатель: {owner?.name || '—'} · {videos.length} видео</p>
+          <p>
+            Создатель: {owner?.name || '—'} · {videos.length} видео
+            {prefs.loop && ' · повтор'}
+            {prefs.shuffle && ' · перемешано'}
+          </p>
+          {videos.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+              <button className="btn-primary" onClick={playFromStart}>
+                <I d={ICONS.play} /> Смотреть
+              </button>
+              {hasContinue && prefs.lastVideoId !== videos[0].id && (
+                <button className="btn-ghost" onClick={continueWatching}>
+                  <I d={ICONS.history} /> Продолжить
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -3718,51 +4405,62 @@ function WatchPage({ videoId, playlistId }) {
 
   // ====================================================
   //  Очередь воспроизведения: плейлист → рекомендации
+  //  Учитывает loop / shuffle из настроек плейлиста
   // ====================================================
+  const [prefsTick, setPrefsTick] = useState(0); // форсированный ре-рендер при смене prefs
   const queue = useMemo(() => {
-    // Сначала пытаемся продолжить плейлист
     let playlistNext = null;
     let stayInPlaylist = false;
-    let playlistRemainingIds = new Set();
+    let excludeFromRecs = new Set();
 
     if (playlistId) {
-      const items = STORE.playlistVideos()
-        .filter(pv => pv.playlistId === playlistId)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .map(pv => STORE.videos().find(v => v.id === pv.videoId))
-        .filter(Boolean);
+      const items = getPlaylistOrderedVideos(playlistId);
+      items.forEach(v => excludeFromRecs.add(v.id));
       const idx = items.findIndex(v => v.id === videoId);
-      if (idx >= 0 && idx < items.length - 1) {
-        playlistNext = items[idx + 1];
-        stayInPlaylist = true;
-        // оставшаяся часть плейлиста после текущего
-        items.slice(idx + 1).forEach(v => playlistRemainingIds.add(v.id));
+      const prefs = getPlaylistPrefs(playlistId);
+      if (idx >= 0) {
+        if (idx < items.length - 1) {
+          playlistNext = items[idx + 1];
+          stayInPlaylist = true;
+        } else if (prefs.loop && items.length > 1) {
+          // Плейлист закончился, но включён повтор — идём с начала
+          playlistNext = items[0];
+          stayInPlaylist = true;
+        }
       }
     }
 
-    // Если в плейлисте есть следующее — играем его
     if (playlistNext) {
-      return { nextVideo: playlistNext, nextInPlaylist: stayInPlaylist };
+      return {
+        nextVideo: playlistNext,
+        source: 'playlist',
+        nextInPlaylist: stayInPlaylist
+      };
     }
 
-    // Иначе берём топ-рекомендацию (исключая весь плейлист, если он был)
-    const exclude = new Set();
-    if (playlistId) {
-      STORE.playlistVideos()
-        .filter(pv => pv.playlistId === playlistId)
-        .forEach(pv => exclude.add(pv.videoId));
-    }
-    const recs = scoreRecommendations(videoId, user, exclude);
-    return { nextVideo: recs[0] || null, nextInPlaylist: false };
-  }, [videoId, playlistId, user]);
+    // Плейлиста нет или он закончился без повтора — берём топ-рекомендацию
+    const recs = scoreRecommendations(videoId, user, excludeFromRecs);
+    return {
+      nextVideo: recs[0] || null,
+      source: recs[0] ? 'recommendation' : null,
+      nextInPlaylist: false
+    };
+  }, [videoId, playlistId, user, prefsTick]);
 
   const nextVideo = queue.nextVideo;
+  const nextSource = queue.source; // 'playlist' | 'recommendation' | null
+
+  // Запоминаем последнее видео в плейлисте (для «продолжить с места»)
+  useEffect(() => {
+    if (playlistId && videoId) {
+      updatePlaylistPrefs(playlistId, { lastVideoId: videoId });
+    }
+  }, [playlistId, videoId]);
 
   const goNext = () => {
     if (!nextVideo) return;
     navigate('watch', {
       id: nextVideo.id,
-      // оставляем playlistId только если следующее видео всё ещё внутри плейлиста
       pl: queue.nextInPlaylist ? playlistId : undefined
     });
   };
@@ -3841,6 +4539,20 @@ function WatchPage({ videoId, playlistId }) {
           <div className="vp" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div>Загрузка…</div>
           </div>
+        )}
+
+        {nextVideo && (
+          <UpNextStrip
+            video={nextVideo}
+            source={nextSource}
+            playlistName={
+              queue.nextInPlaylist
+                ? STORE.playlists().find(p => p.id === playlistId)?.name
+                : null
+            }
+            onSkip={goNext}
+            onOpen={goNext}
+          />
         )}
 
         <h1 className="watch-title">{video.title}</h1>
@@ -3952,7 +4664,13 @@ function WatchPage({ videoId, playlistId }) {
         </div>
       </div>
 
-      <WatchQueue currentVideoId={videoId} playlistId={playlistId} />
+      <WatchQueue
+        currentVideoId={videoId}
+        playlistId={playlistId}
+        nextVideoId={nextVideo?.id}
+        nextSource={nextSource}
+        onPrefsChange={() => setPrefsTick(t => t + 1)}
+      />
 
       {showAddPL && <AddToPlaylistMenu videoId={videoId} onClose={() => setShowAddPL(false)} />}
     </div>
@@ -4399,6 +5117,9 @@ function App() {
   const [theme, toggleTheme] = useTheme();
 
   useEffect(() => {
+    // Гигиена данных: удаляем дубликаты и битые ссылки в плейлистах
+    cleanupPlaylistData();
+
     const id = STORE.currentUserId();
     if (id) {
       const u = STORE.users().find(x => x.id === id);
@@ -4446,7 +5167,14 @@ function App() {
         toggleTheme={toggleTheme}
       />
       <div style={{ display: 'flex' }}>
-        <Sidebar open={sidebarOpen} currentPage={route.page} />
+        <Sidebar open={sidebarOpen} currentPage={route.page} onClose={() => setSidebarOpen(false)} />
+        {sidebarOpen && (
+          <div
+            className="sidebar-backdrop show"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
         <main className="main-content">
           {route.page === 'home' && <HomePage search={search} />}
           {route.page === 'watch' && <WatchPage videoId={route.params.id} playlistId={route.params.pl} />}
